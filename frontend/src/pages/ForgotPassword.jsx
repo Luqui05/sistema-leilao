@@ -4,15 +4,14 @@ import TextInput from '../components/TextInput';
 import Button from '../components/Button';
 import FormError from '../components/FormError';
 import '../styles/ForgotPassword.css';
-
-const emailOk = (v) => /[^\s@]+@[^\s@]+\.[^\s@]+/.test(v);
+import { validateEmail } from '../utils/validation';
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const valid = emailOk(email);
+  const valid = validateEmail(email);
 
   function onSubmit(e) {
     e.preventDefault();

@@ -5,10 +5,7 @@ import PasswordInput from '../components/PasswordInput';
 import Button from '../components/Button';
 import FormError from '../components/FormError';
 import '../styles/Login.css';
-
-function isEmail(v) {
-  return /[^\s@]+@[^\s@]+\.[^\s@]+/.test(v);
-}
+import { validateEmail } from '../utils/validation';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -16,7 +13,7 @@ export default function Login() {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const valid = isEmail(email) && password.length > 0;
+  const valid = validateEmail(email) && password.length > 0;
 
   function onSubmit(e) {
     e.preventDefault();
@@ -39,7 +36,7 @@ export default function Login() {
           placeholder="voce@exemplo.com"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          error={email && !isEmail(email) ? 'E-mail inválido' : ''}
+          error={email && !validateEmail(email) ? 'E-mail inválido' : ''}
         />
         <PasswordInput
           id="password"
