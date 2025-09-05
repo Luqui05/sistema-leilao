@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.lucas.slbackend.dto.mapper.PessoaMapper;
 import com.lucas.slbackend.dto.response.PessoaComPerfisDTO;
 import com.lucas.slbackend.dto.response.PessoaResponseDTO;
 import com.lucas.slbackend.model.Pessoa;
@@ -50,13 +51,13 @@ public class PessoaController {
   public ResponseEntity<PessoaResponseDTO> create(@Valid @RequestBody Pessoa body) {
     Pessoa created = service.create(body);
     return ResponseEntity.created(URI.create("/api/pessoas/" + created.getId()))
-        .body(service.toResponse(created));
+        .body(PessoaMapper.toResponse(created));
   }
 
   @PutMapping("/{id}")
   public ResponseEntity<PessoaResponseDTO> update(@PathVariable Long id, @Valid @RequestBody Pessoa body) {
     Pessoa updated = service.update(id, body);
-    return ResponseEntity.ok(service.toResponse(updated));
+    return ResponseEntity.ok(PessoaMapper.toResponse(updated));
   }
 
   @DeleteMapping("/{id}")

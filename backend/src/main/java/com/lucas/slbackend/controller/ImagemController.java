@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.lucas.slbackend.dto.mapper.ImagemMapper;
+import com.lucas.slbackend.dto.response.ImagemResponse;
 import com.lucas.slbackend.model.Imagem;
 import com.lucas.slbackend.service.ImagemService;
 
@@ -29,24 +31,26 @@ public class ImagemController {
   private final ImagemService service;
 
   @GetMapping
-  public ResponseEntity<Page<Imagem>> list(Pageable pageable) {
-    return ResponseEntity.ok(service.list(pageable));
+  public ResponseEntity<Page<ImagemResponse>> list(Pageable pageable) {
+    return ResponseEntity.ok(service.list(pageable).map(ImagemMapper::toResponse));
   }
 
   @GetMapping("/{id}")
-  public ResponseEntity<Imagem> get(@PathVariable Long id) {
-    return ResponseEntity.ok(service.get(id));
+  public ResponseEntity<ImagemResponse> get(@PathVariable Long id) {
+    return ResponseEntity.ok(ImagemMapper.toResponse(service.get(id)));
   }
 
   @PostMapping
-  public ResponseEntity<Imagem> create(@Valid @RequestBody Imagem body) {
+  public ResponseEntity<ImagemResponse> create(@Valid @RequestBody Imagem body) {
     Imagem created = service.create(body);
-    return ResponseEntity.created(URI.create("/api/imagens/" + created.getId())).body(created);
+    return ResponseEntity
+        .created(URI.create("/api/imagens/" + created.getId()))
+        .body(ImagemMapper.toResponse(created));
   }
 
   @PutMapping("/{id}")
-  public ResponseEntity<Imagem> update(@PathVariable Long id, @Valid @RequestBody Imagem body) {
-    return ResponseEntity.ok(service.update(id, body));
+  public ResponseEntity<ImagemResponse> update(@PathVariable Long id, @Valid @RequestBody Imagem body) {
+    return ResponseEntity.ok(ImagemMapper.toResponse(service.update(id, body)));
   }
 
   @DeleteMapping("/{id}")

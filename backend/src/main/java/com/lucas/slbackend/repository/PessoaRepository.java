@@ -10,6 +10,17 @@ import com.lucas.slbackend.model.Pessoa;
 
 public interface PessoaRepository extends JpaRepository<Pessoa, Long> {
 
+  Optional<Pessoa> findByEmail(String email);
+
+  @Query("""
+      select distinct p
+      from Pessoa p
+      left join fetch p.perfis pp
+      left join fetch pp.perfil pe
+      where lower(p.email) = lower(:email)
+      """)
+  Optional<Pessoa> findByEmailWithPerfis(@Param("email") String email);
+
   @Query("""
       select distinct p
       from Pessoa p

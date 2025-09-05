@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.lucas.slbackend.dto.response.LanceResponse;
+import com.lucas.slbackend.dto.mapper.LanceMapper;
 import com.lucas.slbackend.model.Lance;
 import com.lucas.slbackend.service.LanceService;
 
@@ -29,24 +31,26 @@ public class LanceController {
   private final LanceService service;
 
   @GetMapping
-  public ResponseEntity<Page<Lance>> list(Pageable pageable) {
-    return ResponseEntity.ok(service.list(pageable));
+  public ResponseEntity<Page<LanceResponse>> list(Pageable pageable) {
+    return ResponseEntity.ok(service.list(pageable).map(LanceMapper::toResponse));
   }
 
   @GetMapping("/{id}")
-  public ResponseEntity<Lance> get(@PathVariable Long id) {
-    return ResponseEntity.ok(service.get(id));
+  public ResponseEntity<LanceResponse> get(@PathVariable Long id) {
+    return ResponseEntity.ok(LanceMapper.toResponse(service.get(id)));
   }
 
   @PostMapping
-  public ResponseEntity<Lance> create(@Valid @RequestBody Lance body) {
+  public ResponseEntity<LanceResponse> create(@Valid @RequestBody Lance body) {
     Lance created = service.create(body);
-    return ResponseEntity.created(URI.create("/api/lances/" + created.getId())).body(created);
+    return ResponseEntity
+        .created(URI.create("/api/lances/" + created.getId()))
+        .body(LanceMapper.toResponse(created));
   }
 
   @PutMapping("/{id}")
-  public ResponseEntity<Lance> update(@PathVariable Long id, @Valid @RequestBody Lance body) {
-    return ResponseEntity.ok(service.update(id, body));
+  public ResponseEntity<LanceResponse> update(@PathVariable Long id, @Valid @RequestBody Lance body) {
+    return ResponseEntity.ok(LanceMapper.toResponse(service.update(id, body)));
   }
 
   @DeleteMapping("/{id}")

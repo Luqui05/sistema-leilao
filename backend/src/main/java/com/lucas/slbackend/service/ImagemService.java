@@ -16,47 +16,50 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class ImagemService {
-  private final ImagemRepository repository;
-  private final LeilaoRepository leilaoRepository;
+    private final ImagemRepository repo;
+    private final LeilaoRepository leilaoRepo;
 
-  @Transactional(readOnly = true)
-  public Page<Imagem> list(Pageable pageable) {
-    return repository.findAll(pageable);
-  }
-
-  @Transactional(readOnly = true)
-  public Imagem get(Long id) {
-    return repository.findById(id).orElseThrow(() -> new NotFoundException("Imagem not found"));
-  }
-
-  @Transactional
-  public Imagem create(Imagem entity) {
-    entity.setId(null);
-    if (entity.getLeilao() != null && entity.getLeilao().getId() != null) {
-      Leilao l = leilaoRepository.findById(entity.getLeilao().getId())
-          .orElseThrow(() -> new NotFoundException("Leilao not found"));
-      entity.setLeilao(l);
-    } else if (entity.getLeilao() != null) {
-      throw new NotFoundException("Leilao reference required");
+    @Transactional(readOnly = true)
+    public Page<Imagem> list(Pageable pageable) {
+        return repo.findAll(pageable);
     }
-    return repository.save(entity);
-  }
 
-  @Transactional
-  public Imagem update(Long id, Imagem updates) {
-    Imagem existing = get(id);
-    existing.setDataHoraCadastro(updates.getDataHoraCadastro());
-    existing.setNomeImagem(updates.getNomeImagem());
-    if (updates.getLeilao() != null && updates.getLeilao().getId() != null) {
-      Leilao l = leilaoRepository.findById(updates.getLeilao().getId())
-          .orElseThrow(() -> new NotFoundException("Leilao not found"));
-      existing.setLeilao(l);
+    @Transactional(readOnly = true)
+    public Imagem get(Long id) {
+        return repo.findById(id).orElseThrow(() -> new NotFoundException("Imagem not found"));
     }
-    return repository.save(existing);
-  }
 
-  @Transactional
-  public void delete(Long id) {
-    repository.delete(get(id));
-  }
+    @Transactional
+    public Imagem create(Imagem body) {
+        if (body == null || body.getLeilao() == null || body.getLeilao().getId() == null) {
+            throw new IllegalArgumentException("leilao.id é obrigatório");
+        }
+
+        Long leilaoId = body.getLeilao().getId();
+        Leilao leilao = leilaoRepo.findById(leilaoId)
+            .orElseThrow(() -> new IllegalArgumentException("Leilão não encontrado: " + leilaoId));
+
+        body.setId(null);
+        body.setLeilao(leilao);
+
+        return repo.save(body);
+    }
+
+    @Transactional
+    public Imagem update(Long id, Imagem updates) {
+        Imagem existing = get(id);
+        existing.setDataHoraCadastro(updates.getDataHoraCadastro());
+        existing.setNomeImagem(updates.getNomeImagem());
+        if (updates.getLeilao() != null && updates.getLeilao().getId() != null) {
+            Leilao l = leilaoRepo.findById(updates.getLeilao().getId())
+                .orElseThrow(() -> new NotFoundException("Leilao not found"));
+            existing.setLeilao(l);
+        }
+        return repo.save(existing);
+    }
+
+    @Transactional
+    public void delete(Long id) {
+        repo.delete(get(id));
+    }
 }

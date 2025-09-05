@@ -1,15 +1,22 @@
 package com.lucas.slbackend.service;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.lucas.slbackend.dto.response.PerfilResumoDTO;
+import com.lucas.slbackend.dto.mapper.PessoaMapper;
 import com.lucas.slbackend.dto.response.PessoaComPerfisDTO;
 import com.lucas.slbackend.dto.response.PessoaResponseDTO;
+import com.lucas.slbackend.enums.TipoPerfil;
 import com.lucas.slbackend.exception.NotFoundException;
+import com.lucas.slbackend.model.Perfil;
 import com.lucas.slbackend.model.Pessoa;
+import com.lucas.slbackend.model.PessoaPerfil;
+import com.lucas.slbackend.repository.PerfilRepository;
+import com.lucas.slbackend.repository.PessoaPerfilRepository;
 import com.lucas.slbackend.repository.PessoaRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -18,6 +25,9 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class PessoaService {
   private final PessoaRepository repository;
+  private final PessoaPerfilRepository pessoaPerfilRepository;
+  private final PerfilRepository perfilRepository;
+  private final PasswordEncoder passwordEncoder;
 
   @Transactional(readOnly = true)
   public Page<Pessoa> list(Pageable pageable) {
@@ -28,7 +38,7 @@ public class PessoaService {
   @Transactional(readOnly = true)
   public Page<PessoaResponseDTO> listDTO(Pageable pageable) {
     return repository.findAll(pageable)
-        .map(this::toResponse);
+        .map(com.lucas.slbackend.dto.mapper.PessoaMapper::toResponse);
   }
 
   @Transactional(readOnly = true)
@@ -39,34 +49,45 @@ public class PessoaService {
   // get simples em DTO
   @Transactional(readOnly = true)
   public PessoaResponseDTO getResponse(Long id) {
-    return toResponse(get(id));
+    return PessoaMapper.toResponse(get(id));
   }
 
   // get com perfis via fetch join
   @Transactional(readOnly = true)
   public PessoaComPerfisDTO getWithPerfisDTO(Long id) {
     Pessoa p = repository.findByIdWithPerfis(id).orElseThrow(() -> new NotFoundException("Pessoa not found"));
-    var perfis = p.getPerfis().stream()
-        .map(pp -> new PerfilResumoDTO(
-            pp.getPerfil() != null ? pp.getPerfil().getId() : null,
-            pp.getPerfil() != null ? pp.getPerfil().getTipo() : null))
-        .toList();
-    return new PessoaComPerfisDTO(p.getId(), p.getNome(), p.getEmail(), p.getAtivo(), perfis);
+    return PessoaMapper.toComPerfis(p);
   }
 
   @Transactional
   public Pessoa create(Pessoa entity) {
     entity.setId(null);
-    return repository.save(entity);
+    // e-mail único
+    if (repository.findByEmail(entity.getEmail()).isPresent()) {
+      throw new DataIntegrityViolationException("E-mail already registered");
+    }
+    // codificar senha
+    if (entity.getSenha() != null) {
+      entity.setSenha(passwordEncoder.encode(entity.getSenha()));
+    }
+    Pessoa saved = repository.save(entity);
+
+    // Garante pelo menos um perfil (COMPRADOR por padrão)
+    if (saved.getPerfis() == null || saved.getPerfis().isEmpty()) {
+      attachPerfil(saved, TipoPerfil.COMPRADOR);
+    }
+    return saved;
   }
 
   @Transactional
   public Pessoa update(Long id, Pessoa updates) {
     Pessoa existing = get(id);
-    // copy allowed fields
     existing.setNome(updates.getNome());
     existing.setEmail(updates.getEmail());
-    existing.setSenha(updates.getSenha());
+    if (updates.getSenha() != null && !updates.getSenha().isBlank()
+        && !updates.getSenha().equals(existing.getSenha())) {
+      existing.setSenha(encodeIfPlain(updates.getSenha()));
+    }
     existing.setCodigoValidacao(updates.getCodigoValidacao());
     existing.setValidadeCodigoValidacao(updates.getValidadeCodigoValidacao());
     existing.setAtivo(updates.getAtivo());
@@ -80,7 +101,26 @@ public class PessoaService {
     repository.delete(existing);
   }
 
-  public PessoaResponseDTO toResponse(Pessoa p) {
-    return new PessoaResponseDTO(p.getId(), p.getNome(), p.getEmail(), p.getAtivo());
+  // anexar perfil(is) por tipo
+  @Transactional
+  public void attachPerfil(Pessoa pessoa, TipoPerfil tipo) {
+    Perfil perfil = perfilRepository.findByTipo(tipo)
+        .orElseGet(() -> {
+          Perfil pe = new Perfil();
+          pe.setTipo(tipo);
+          return perfilRepository.save(pe);
+        });
+    PessoaPerfil pp = new PessoaPerfil();
+    pp.setPessoa(pessoa);
+    pp.setPerfil(perfil);
+    pessoaPerfilRepository.save(pp);
+  }
+
+  private String encodeIfPlain(String rawOrEncoded) {
+    // se começar com o marcador do bcrypt, assume que já está codificada
+    if (rawOrEncoded.startsWith("$2a$") || rawOrEncoded.startsWith("$2b$") || rawOrEncoded.startsWith("$2y$")) {
+      return rawOrEncoded;
+    }
+    return passwordEncoder.encode(rawOrEncoded);
   }
 }
