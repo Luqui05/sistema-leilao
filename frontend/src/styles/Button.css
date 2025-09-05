@@ -1,0 +1,12 @@
+.btn {
+  height: 44px;
+  padding: 0 16px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  color: #fff;
+  background: #111;
+}
+.btn.secondary { background: transparent; border: 1px solid #fff; }
+.btn:hover { opacity: .9; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
