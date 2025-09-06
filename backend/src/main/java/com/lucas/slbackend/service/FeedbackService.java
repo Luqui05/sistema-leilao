@@ -5,6 +5,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.lucas.slbackend.dto.mapper.FeedbackMapper;
+import com.lucas.slbackend.dto.request.FeedbackRequestDTO;
+import com.lucas.slbackend.dto.response.FeedbackResponseDTO;
 import com.lucas.slbackend.exception.NotFoundException;
 import com.lucas.slbackend.model.Feedback;
 import com.lucas.slbackend.model.Pessoa;
@@ -16,54 +19,66 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class FeedbackService {
-    private final FeedbackRepository repository;
-    private final PessoaRepository pessoaRepository;
+  private final FeedbackRepository repository;
+  private final PessoaRepository pessoaRepository;
 
-    @Transactional(readOnly = true)
-    public Page<Feedback> list(Pageable pageable) { return repository.findAll(pageable); }
+  @Transactional(readOnly = true)
+  public Page<FeedbackResponseDTO> list(Pageable pageable) {
+    return repository.findAll(pageable)
+      .map(FeedbackMapper::toResponseDTO);
+  }
 
-    @Transactional(readOnly = true)
-    public Feedback get(Long id) { return repository.findById(id).orElseThrow(() -> new NotFoundException("Feedback not found")); }
+  @Transactional(readOnly = true)
+  public FeedbackResponseDTO get(Long id) {
+    Feedback feedback = repository.findById(id)
+      .orElseThrow(() -> new NotFoundException("Feedback not found"));
+    return FeedbackMapper.toResponseDTO(feedback);
+  }
 
-    @Transactional
-    public Feedback create(Feedback entity) {
-        entity.setId(null);
-        if (entity.getAutor() != null && entity.getAutor().getId() != null) {
-            Pessoa autor = pessoaRepository.findById(entity.getAutor().getId()).orElseThrow(() -> new NotFoundException("Pessoa (autor) not found"));
-            entity.setAutor(autor);
-        } else {
-            entity.setAutor(null);
-        }
-        if (entity.getDestinatario() != null && entity.getDestinatario().getId() != null) {
-            Pessoa dest = pessoaRepository.findById(entity.getDestinatario().getId()).orElseThrow(() -> new NotFoundException("Pessoa (destinatario) not found"));
-            entity.setDestinatario(dest);
-        } else {
-            entity.setDestinatario(null);
-        }
-        return repository.save(entity);
-    }
+  @Transactional
+  public FeedbackResponseDTO create(FeedbackRequestDTO dto) {
+    Feedback entity = new Feedback();
+    entity.setComentario(dto.comentario());
+    entity.setNota(dto.nota());
+    entity.setDataHora(dto.dataHora());
 
-    @Transactional
-    public Feedback update(Long id, Feedback updates) {
-        Feedback existing = get(id);
-        existing.setComentario(updates.getComentario());
-        existing.setNota(updates.getNota());
-        existing.setDataHora(updates.getDataHora());
-        if (updates.getAutor() != null && updates.getAutor().getId() != null) {
-            Pessoa autor = pessoaRepository.findById(updates.getAutor().getId()).orElseThrow(() -> new NotFoundException("Pessoa (autor) not found"));
-            existing.setAutor(autor);
-        } else if (updates.getAutor() == null) {
-            existing.setAutor(null);
-        }
-        if (updates.getDestinatario() != null && updates.getDestinatario().getId() != null) {
-            Pessoa dest = pessoaRepository.findById(updates.getDestinatario().getId()).orElseThrow(() -> new NotFoundException("Pessoa (destinatario) not found"));
-            existing.setDestinatario(dest);
-        } else if (updates.getDestinatario() == null) {
-            existing.setDestinatario(null);
-        }
-        return repository.save(existing);
-    }
+    Pessoa autor = pessoaRepository.findById(dto.autorId())
+      .orElseThrow(() -> new NotFoundException("Pessoa (autor) not found"));
+    entity.setAutor(autor);
 
-    @Transactional
-    public void delete(Long id) { repository.delete(get(id)); }
+    Pessoa destinatario = pessoaRepository.findById(dto.destinatarioId())
+      .orElseThrow(() -> new NotFoundException("Pessoa (destinatario) not found"));
+    entity.setDestinatario(destinatario);
+
+    Feedback saved = repository.save(entity);
+    return FeedbackMapper.toResponseDTO(saved);
+  }
+
+  @Transactional
+  public FeedbackResponseDTO update(Long id, FeedbackRequestDTO dto) {
+    Feedback existing = repository.findById(id)
+      .orElseThrow(() -> new NotFoundException("Feedback not found"));
+
+    existing.setComentario(dto.comentario());
+    existing.setNota(dto.nota());
+    existing.setDataHora(dto.dataHora());
+
+    Pessoa autor = pessoaRepository.findById(dto.autorId())
+      .orElseThrow(() -> new NotFoundException("Pessoa (autor) not found"));
+    existing.setAutor(autor);
+
+    Pessoa destinatario = pessoaRepository.findById(dto.destinatarioId())
+      .orElseThrow(() -> new NotFoundException("Pessoa (destinatario) not found"));
+    existing.setDestinatario(destinatario);
+
+    Feedback saved = repository.save(existing);
+    return FeedbackMapper.toResponseDTO(saved);
+  }
+
+  @Transactional
+  public void delete(Long id) {
+    Feedback feedback = repository.findById(id)
+      .orElseThrow(() -> new NotFoundException("Feedback not found"));
+    repository.delete(feedback);
+  }
 }

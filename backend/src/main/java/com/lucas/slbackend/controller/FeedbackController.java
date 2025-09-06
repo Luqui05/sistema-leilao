@@ -15,7 +15,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.lucas.slbackend.model.Feedback;
+import com.lucas.slbackend.dto.request.FeedbackRequestDTO;
+import com.lucas.slbackend.dto.response.FeedbackResponseDTO;
 import com.lucas.slbackend.service.FeedbackService;
 
 import jakarta.validation.Valid;
@@ -29,23 +30,23 @@ public class FeedbackController {
   private final FeedbackService service;
 
   @GetMapping
-  public ResponseEntity<Page<Feedback>> list(Pageable pageable) {
+  public ResponseEntity<Page<FeedbackResponseDTO>> list(Pageable pageable) {
     return ResponseEntity.ok(service.list(pageable));
   }
 
   @GetMapping("/{id}")
-  public ResponseEntity<Feedback> get(@PathVariable Long id) {
+  public ResponseEntity<FeedbackResponseDTO> get(@PathVariable Long id) {
     return ResponseEntity.ok(service.get(id));
   }
 
   @PostMapping
-  public ResponseEntity<Feedback> create(@Valid @RequestBody Feedback body) {
-    Feedback created = service.create(body);
-    return ResponseEntity.created(URI.create("/api/feedbacks/" + created.getId())).body(created);
+  public ResponseEntity<FeedbackResponseDTO> create(@Valid @RequestBody FeedbackRequestDTO body) {
+    FeedbackResponseDTO created = service.create(body);
+    return ResponseEntity.created(URI.create("/api/feedbacks/" + created.id())).body(created);
   }
 
   @PutMapping("/{id}")
-  public ResponseEntity<Feedback> update(@PathVariable Long id, @Valid @RequestBody Feedback body) {
+  public ResponseEntity<FeedbackResponseDTO> update(@PathVariable Long id, @Valid @RequestBody FeedbackRequestDTO body) {
     return ResponseEntity.ok(service.update(id, body));
   }
 
