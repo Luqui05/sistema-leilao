@@ -2,6 +2,7 @@ package com.lucas.slbackend.dto.mapper;
 
 import java.util.List;
 
+import com.lucas.slbackend.dto.request.PessoaRequestDTO;
 import com.lucas.slbackend.dto.response.PerfilResumoDTO;
 import com.lucas.slbackend.dto.response.PessoaComPerfisDTO;
 import com.lucas.slbackend.dto.response.PessoaResponseDTO;
@@ -32,5 +33,23 @@ public final class PessoaMapper {
             .map(PessoaMapper::toPerfilResumo)
             .toList();
     return new PessoaComPerfisDTO(p.getId(), p.getNome(), p.getEmail(), p.getAtivo(), perfis);
+  }
+
+  public static Pessoa toEntity(PessoaRequestDTO dto) {
+    if (dto == null) return null;
+    Pessoa p = new Pessoa();
+    p.setNome(dto.nome());
+    p.setEmail(dto.email());
+    p.setSenha(dto.senha());
+    return p;
+  }
+
+  public static void updateEntity(Pessoa entity, PessoaRequestDTO dto) {
+    if (dto == null || entity == null) return;
+    entity.setNome(dto.nome());
+    entity.setEmail(dto.email());
+    if (dto.senha() != null && !dto.senha().isBlank()) {
+      entity.setSenha(dto.senha());
+    }
   }
 }

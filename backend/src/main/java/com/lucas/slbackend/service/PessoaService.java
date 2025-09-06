@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.lucas.slbackend.dto.mapper.PessoaMapper;
+import com.lucas.slbackend.dto.request.PessoaRequestDTO;
 import com.lucas.slbackend.dto.response.PessoaComPerfisDTO;
 import com.lucas.slbackend.dto.response.PessoaResponseDTO;
 import com.lucas.slbackend.enums.TipoPerfil;
@@ -60,7 +61,8 @@ public class PessoaService {
   }
 
   @Transactional
-  public Pessoa create(Pessoa entity) {
+  public Pessoa create(PessoaRequestDTO dto) {
+    Pessoa entity = PessoaMapper.toEntity(dto);
     entity.setId(null);
     // e-mail único
     if (repository.findByEmail(entity.getEmail()).isPresent()) {
@@ -80,18 +82,13 @@ public class PessoaService {
   }
 
   @Transactional
-  public Pessoa update(Long id, Pessoa updates) {
+  public Pessoa update(Long id, PessoaRequestDTO dto) {
     Pessoa existing = get(id);
-    existing.setNome(updates.getNome());
-    existing.setEmail(updates.getEmail());
-    if (updates.getSenha() != null && !updates.getSenha().isBlank()
-        && !updates.getSenha().equals(existing.getSenha())) {
-      existing.setSenha(encodeIfPlain(updates.getSenha()));
+    PessoaMapper.updateEntity(existing, dto);
+    if (dto.senha() != null && !dto.senha().isBlank()
+        && !passwordEncoder.matches(dto.senha(), existing.getSenha())) {
+      existing.setSenha(encodeIfPlain(dto.senha()));
     }
-    existing.setCodigoValidacao(updates.getCodigoValidacao());
-    existing.setValidadeCodigoValidacao(updates.getValidadeCodigoValidacao());
-    existing.setAtivo(updates.getAtivo());
-    existing.setFotoPerfil(updates.getFotoPerfil());
     return repository.save(existing);
   }
 

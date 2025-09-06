@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.lucas.slbackend.dto.mapper.PessoaMapper;
+import com.lucas.slbackend.dto.request.PessoaRequestDTO;
 import com.lucas.slbackend.dto.response.PessoaComPerfisDTO;
 import com.lucas.slbackend.dto.response.PessoaResponseDTO;
 import com.lucas.slbackend.model.Pessoa;
@@ -48,14 +49,14 @@ public class PessoaController {
   }
 
   @PostMapping
-  public ResponseEntity<PessoaResponseDTO> create(@Valid @RequestBody Pessoa body) {
+  public ResponseEntity<PessoaResponseDTO> create(@Valid @RequestBody PessoaRequestDTO body) {
     Pessoa created = service.create(body);
     return ResponseEntity.created(URI.create("/api/pessoas/" + created.getId()))
         .body(PessoaMapper.toResponse(created));
   }
 
   @PutMapping("/{id}")
-  public ResponseEntity<PessoaResponseDTO> update(@PathVariable Long id, @Valid @RequestBody Pessoa body) {
+  public ResponseEntity<PessoaResponseDTO> update(@PathVariable Long id, @Valid @RequestBody PessoaRequestDTO body) {
     Pessoa updated = service.update(id, body);
     return ResponseEntity.ok(PessoaMapper.toResponse(updated));
   }
