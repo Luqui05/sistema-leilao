@@ -15,10 +15,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.lucas.slbackend.dto.response.LanceResponse;
 import com.lucas.slbackend.dto.mapper.LanceMapper;
-import com.lucas.slbackend.model.Lance;
+import com.lucas.slbackend.dto.request.LanceRequestDTO;
+import com.lucas.slbackend.dto.response.LanceResponse;
 import com.lucas.slbackend.service.LanceService;
+import com.lucas.slbackend.service.LeilaoService;
+import com.lucas.slbackend.service.PessoaService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +31,8 @@ import lombok.RequiredArgsConstructor;
 @Validated
 public class LanceController {
   private final LanceService service;
+  private final LeilaoService leilaoService;
+  private final PessoaService pessoaService;
 
   @GetMapping
   public ResponseEntity<Page<LanceResponse>> list(Pageable pageable) {
@@ -41,16 +45,24 @@ public class LanceController {
   }
 
   @PostMapping
-  public ResponseEntity<LanceResponse> create(@Valid @RequestBody Lance body) {
-    Lance created = service.create(body);
+  public ResponseEntity<LanceResponse> create(@Valid @RequestBody LanceRequestDTO body) {
+    var leilao = leilaoService.get(body.leilaoId());
+    var autor = pessoaService.get(body.autorId());
+    var entity = LanceMapper.toEntity(body, leilao, autor);
+    var created = service.create(entity);
     return ResponseEntity
         .created(URI.create("/api/lances/" + created.getId()))
         .body(LanceMapper.toResponse(created));
   }
 
   @PutMapping("/{id}")
-  public ResponseEntity<LanceResponse> update(@PathVariable Long id, @Valid @RequestBody Lance body) {
-    return ResponseEntity.ok(LanceMapper.toResponse(service.update(id, body)));
+  public ResponseEntity<LanceResponse> update(@PathVariable Long id, @Valid @RequestBody LanceRequestDTO body) {
+    var leilao = leilaoService.get(body.leilaoId());
+    var autor = pessoaService.get(body.autorId());
+    var existing = service.get(id);
+    LanceMapper.updateEntity(existing, body, leilao, autor);
+    var updated = service.update(id, existing);
+    return ResponseEntity.ok(LanceMapper.toResponse(updated));
   }
 
   @DeleteMapping("/{id}")
