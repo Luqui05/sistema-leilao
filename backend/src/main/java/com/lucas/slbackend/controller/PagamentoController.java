@@ -17,6 +17,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.lucas.slbackend.model.Pagamento;
 import com.lucas.slbackend.service.PagamentoService;
+import com.lucas.slbackend.dto.request.PagamentoRequestDTO;
+import com.lucas.slbackend.dto.response.PagamentoResponseDTO;
+import com.lucas.slbackend.dto.mapper.PagamentoMapper;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -29,24 +32,26 @@ public class PagamentoController {
   private final PagamentoService service;
 
   @GetMapping
-  public ResponseEntity<Page<Pagamento>> list(Pageable pageable) {
-    return ResponseEntity.ok(service.list(pageable));
+  public ResponseEntity<Page<PagamentoResponseDTO>> list(Pageable pageable) {
+    return ResponseEntity.ok(service.list(pageable).map(PagamentoMapper::toResponse));
   }
 
   @GetMapping("/{id}")
-  public ResponseEntity<Pagamento> get(@PathVariable Long id) {
-    return ResponseEntity.ok(service.get(id));
+  public ResponseEntity<PagamentoResponseDTO> get(@PathVariable Long id) {
+    return ResponseEntity.ok(PagamentoMapper.toResponse(service.get(id)));
   }
 
   @PostMapping
-  public ResponseEntity<Pagamento> create(@Valid @RequestBody Pagamento body) {
+  public ResponseEntity<PagamentoResponseDTO> create(@Valid @RequestBody PagamentoRequestDTO body) {
     Pagamento created = service.create(body);
-    return ResponseEntity.created(URI.create("/api/pagamentos/" + created.getId())).body(created);
+    return ResponseEntity.created(URI.create("/api/pagamentos/" + created.getId()))
+        .body(PagamentoMapper.toResponse(created));
   }
 
   @PutMapping("/{id}")
-  public ResponseEntity<Pagamento> update(@PathVariable Long id, @Valid @RequestBody Pagamento body) {
-    return ResponseEntity.ok(service.update(id, body));
+  public ResponseEntity<PagamentoResponseDTO> update(@PathVariable Long id, @Valid @RequestBody PagamentoRequestDTO body) {
+    Pagamento updated = service.update(id, body);
+    return ResponseEntity.ok(PagamentoMapper.toResponse(updated));
   }
 
   @DeleteMapping("/{id}")
