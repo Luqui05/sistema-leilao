@@ -15,7 +15,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.lucas.slbackend.dto.request.PerfilRequestDTO;
 import com.lucas.slbackend.dto.response.PerfilResponseDTO;
+import com.lucas.slbackend.dto.mapper.PerfilMapper;
 import com.lucas.slbackend.model.Perfil;
 import com.lucas.slbackend.service.PerfilService;
 
@@ -40,15 +42,18 @@ public class PerfilController {
   }
 
   @PostMapping
-  public ResponseEntity<PerfilResponseDTO> create(@Valid @RequestBody Perfil body) {
-    Perfil created = service.create(body);
+  public ResponseEntity<PerfilResponseDTO> create(@Valid @RequestBody PerfilRequestDTO body) {
+    Perfil entity = PerfilMapper.toEntity(body);
+    Perfil created = service.create(entity);
     return ResponseEntity.created(URI.create("/api/perfis/" + created.getId()))
         .body(service.toResponse(created));
   }
 
   @PutMapping("/{id}")
-  public ResponseEntity<PerfilResponseDTO> update(@PathVariable Long id, @Valid @RequestBody Perfil body) {
-    Perfil updated = service.update(id, body);
+  public ResponseEntity<PerfilResponseDTO> update(@PathVariable Long id, @Valid @RequestBody PerfilRequestDTO body) {
+    Perfil existing = service.get(id);
+    PerfilMapper.updateEntity(existing, body);
+    Perfil updated = service.update(id, existing);
     return ResponseEntity.ok(service.toResponse(updated));
   }
 

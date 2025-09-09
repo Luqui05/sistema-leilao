@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.lucas.slbackend.dto.request.CategoriaRequestDTO;
-import com.lucas.slbackend.dto.response.CategoriaComLeiloesDTO;
 import com.lucas.slbackend.dto.response.CategoriaResponseDTO;
 import com.lucas.slbackend.model.Categoria;
 import com.lucas.slbackend.service.CategoriaService;
@@ -40,12 +39,6 @@ public class CategoriaController {
     return ResponseEntity.ok(service.getResponse(id));
   }
 
-  // quando precisar trazer 'leiloes', usa fetch join e DTO
-  @GetMapping("/{id}/com-leiloes")
-  public ResponseEntity<CategoriaComLeiloesDTO> getComLeiloes(@PathVariable Long id) {
-    return ResponseEntity.ok(service.getWithLeiloesDTO(id));
-  }
-
   @PostMapping
   public ResponseEntity<CategoriaResponseDTO> create(@Valid @RequestBody CategoriaRequestDTO body) {
     Categoria saved = service.create(body);
@@ -55,8 +48,9 @@ public class CategoriaController {
   }
 
   @PutMapping("/{id}")
-  public ResponseEntity<Categoria> update(@PathVariable Long id, @Valid @RequestBody Categoria body) {
-    return ResponseEntity.ok(service.update(id, body));
+  public ResponseEntity<CategoriaResponseDTO> update(@PathVariable Long id, @Valid @RequestBody CategoriaRequestDTO body) {
+    var updated = service.update(id, body);
+    return ResponseEntity.ok(new CategoriaResponseDTO(updated.getId(), updated.getNome()));
   }
 
   @DeleteMapping("/{id}")

@@ -1,4 +1,9 @@
 package com.lucas.slbackend.dto.request;
 
-public record CategoriaRequestDTO(String nome) {
+import jakarta.validation.constraints.NotNull;
+
+public record CategoriaRequestDTO(
+  @NotNull String nome,
+  String observacao
+  ) {
 }

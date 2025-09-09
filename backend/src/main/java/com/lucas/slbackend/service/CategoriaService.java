@@ -69,15 +69,10 @@ public class CategoriaService {
   }
 
   @Transactional
-  public Categoria update(Long id, Categoria updates) {
+  public Categoria update(Long id, CategoriaRequestDTO dto) {
     Categoria existing = get(id);
-    existing.setNome(updates.getNome());
-    existing.setObservacao(updates.getObservacao());
-    if (updates.getCriador() != null && updates.getCriador().getId() != null) {
-      Pessoa criador = pessoaRepository.findById(updates.getCriador().getId())
-          .orElseThrow(() -> new NotFoundException("Pessoa (criador) not found"));
-      existing.setCriador(criador);
-    }
+    existing.setNome(dto.nome());
+    existing.setObservacao(dto.observacao());
     return repository.save(existing);
   }
 
