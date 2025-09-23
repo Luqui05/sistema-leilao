@@ -1,7 +1,11 @@
 import React from "react";
 
 const Header = ({ pageTitle }) => {
-  <header className="flex items-center justify-between px-6 py-4 bg-gray-100 border-b"></header>
-}
+    return (
+        <header>
+            <h1>Sistema de Leilão - {pageTitle}</h1>
+        </header>
+    );
+};
 
 export default Header;
